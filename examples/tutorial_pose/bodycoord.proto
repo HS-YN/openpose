@@ -1,0 +1,32 @@
+syntax = "proto2";
+
+package bodycoord;
+
+message Detect {
+  required string key = 1;
+
+  optional int32 openpose_cnt = 2;
+  repeated string openpose_coord = 3;
+  
+  optional int32 yolo_cnt = 4;
+  repeated string yolo_coord = 5;
+
+  /*
+  Code below is a modular approach of defining protocol buffer.
+  This time, I'd rather not use this approach (for simplicity)
+
+  message Openpose {
+    required int32 cnt = 1;
+    repeated string coord = 2;
+  }
+  
+  message Yolo {
+    required int32 cnt = 1;
+    repeated string coord = 2;
+  }
+
+  required Openpose pose_body = 2;
+  required Yolo yolo_body = 3;
+  */
+}
+
