@@ -1,9 +1,9 @@
 set(EXAMPLE_FILES 
   3_HTTP_test2.cpp)
 
-file(GLOB DARKLIST "/Net/darknet/obj/*.o")
-file(GLOB DARKSRC "/Net/darknet/src/*.c")
-file(GLOB DARKCUDA "/Net/darknet/src/*.cu")
+file(GLOB DARKLIST "${CMAKE_CURRENT_SOURCE_DIR}/../../../darknet/obj/*.o")
+file(GLOB DARKSRC  "${CMAKE_CURRENT_SOURCE_DIR}/../../../darknet/src/*.c")
+file(GLOB DARKCUDA "${CMAKE_CURRENT_SOURCE_DIR}/../../../darknet/src/*.cu")
 file(GLOB proto_files *.proto)
 
 find_package(CUDA)
@@ -13,11 +13,8 @@ find_package(Protobuf)
 
 #enable_language(CUDA)
 #include(${CMAKE_SOURCE_DIR}/cmake/Utils.cmake)
-
 #set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
 #set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda-8.0")
-#set(CMAKE_CUDA_DEVICE_LINK_LIBRARY 
-#    "<CMAKE_CUDA_COMPILER> <CMAKE_CUDA_LINK_FLAGS> <LANGUAGE_COMPILE_FLAGS> ${CMAKE_CUDA_COMPILE_OPTIONS_PIC} -shared -dlink <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 foreach(EXAMPLE_FILE ${EXAMPLE_FILES})
 
@@ -30,14 +27,15 @@ foreach(EXAMPLE_FILE ${EXAMPLE_FILES})
   endif ()
 
   message(STATUS "Adding Example ${EXE_NAME}")
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/Net/darknet/include/ -I/usr/local/cuda-8.0/include -fPIC -w -DOPENCV -DGPU -DCUDNN")
-  set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/Net/darknet -L/usr/local/cuda-8.0/lib64")
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../../../darknet/include/ -I/usr/local/cuda-8.0/include -fPIC -w -DOPENCV -DGPU -DCUDNN")
+  set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${CMAKE_CURRENT_SOURCE_DIR}/../../../darknet -L/usr/local/cuda-8.0/lib64")
 
   #add_library(darknet-cpp-shared SHARED IMPORTED)
   #set_property(TARGET darknet-cpp-shared PROPERTY IMPORTED_LOCATION "/Net/darknet/darknet-cpp-shared.so")
-  set(DARKHEADER /Net/darknet/include/darknet.h)
+
+  set(DARKHEADER ${CMAKE_CURRENT_SOURCE_DIR}/../../../darknet/include/darknet.h)
   add_library(mylib ${DARKSRC} ${DARKHEADER})
-  target_include_directories(mylib PRIVATE /Net/darknet/include)
+  target_include_directories(mylib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../darknet/include)
   set_source_files_properties(${DARKSRC} PROPERTIES LANGUAGE CXX)
 
   protobuf_generate_cpp(proto_srcs proto_hdrs ${proto_files})

@@ -26,6 +26,7 @@ namespace gflags = google;
 #include <iostream>
 #include <algorithm>
 #include <string>
+#include <unistd.h>
 
 //extern "C" {
 #include <darknet.h>
@@ -43,24 +44,11 @@ namespace gflags = google;
 // then re-allocated everytime the data transaction is made.
 char *protobuf_results;
 
-/*
-// 2018/08/17 FLAGS_model_pose is malfunctioning after a certain amount of time passes by.
-// "Error: String does not correspond to any model (COCO, MPI, MPI_4_layers)"
-// "Coming from .../src/openpose/utilities/flagsToOpenPose.cpp:flagsToPoseModel():39"
-// After profiling, I found out that the value of FLAGS_model_pose suddenly changes to 1534,
-// which is not intended. Thus, I've changed the implementation slightly to use preprocessor
-// flag to prevent this unknown error.
-#define PREP_model_pose "COCO"
-// 2018/08/17 Another error from FLAGS_net_resolution:
-// "CheckE failed (1 vs. 2): Invalid resolution format: `153448`, it should be e.g. `-1x368`."
-// "Coming from: .../src/openpose/utilities/flagsToOpenPose.cpp:flagsToPoint():307"
-#define PREP_net_resolution "-1x368"
-#define PREP_output_resolution "-1x-1"
-*/
 // See all the available parameter options withe the `--help` flag. E.g. `build/examples/openpose/openpose.bin --help`
 // Note: This command will show you flags for other unnecessary 3rdparty files. Check only the flags for the OpenPose
 // executable. E.g. for `openpose.bin`, look for `Flags from examples/openpose/openpose.cpp:`.
 // Debugging/Other
+DEFINE_string(darknet_path, "/ROAR/darknet", "Specify the path of darknet");
 DEFINE_int32(logging_level, 3, "The logging level. Integer in the range [0, 255]. 0 will output any log() message, while"
                                " 255 will not output any. Current OpenPose library messages are in the range 0-4: 1 for"
                                " low priority messages and 4 for important ones.");
@@ -110,7 +98,6 @@ bool b_firsttime = true;
 
 void yolo_initialize();
 void yolo_detect(unsigned char *pFramedata, long JPEG_data_size, bodycoord::Detect *body_coord);
-//void yolo_detect();
 
 char **yolo_names;
 image **yolo_alphabet;
@@ -207,7 +194,8 @@ int openPoseTutorialPose1_modified(unsigned char *pFramedata, long JPEG_data_siz
         auto outputImage = opOutputToCvMat.formatToCvMat(outputArray);
 
         // ------------------------- SHOWING RESULT AND CLOSING -------------------------
-        // Step 1 - Show results TODO result is disabled... just to let you know :)
+        // Step 1 - Show results 
+        // result is disabled now. If you want to see the result from Openpose directly, use the code below:
         //frameDisplayer.displayFrame(outputImage, 1); // Alternative: cv::imshow(outputImage) + cv::waitKey(0)
     }
     // Step 2 - Logging information message
@@ -516,9 +504,10 @@ void yolo_initialize() {
     char *datacfg = "cfg/coco.data";
     char *cfg = "cfg/yolov3.cfg";
     char *weights = "yolov3.weights";
-    
+    char *curr_dir = get_current_dir_name();
+
     // Change current directory to handle darknet-dependent functions
-    chdir("/Net/darknet");
+    chdir(FLAGS_darknet_path.c_str());
 
     list *options = read_data_cfg(datacfg);
     char *name_list = option_find_str(options, "names", "data/names.list");
@@ -529,7 +518,7 @@ void yolo_initialize() {
     set_batch_network(yolo_net, 1); 
     srand(2222222);
 
-    chdir("/Net/openpose");
+    chdir(curr_dir);
 }
 
 void yolo_detect(unsigned char *pFramedata, long JPEG_data_size, bodycoord::Detect *body_coord) {
@@ -546,8 +535,8 @@ void yolo_detect(unsigned char *pFramedata, long JPEG_data_size, bodycoord::Dete
     // First is (random) Segmentation Fault without any explicit reason
     // (Maybe due to inner data formatting problem)
     // Second is Image Corruption
-    // Therefore, it would be safe to use cv::Mat rather than obsolete IplImage
-    // in terms of robustness.
+    // Therefore, for initialization, it would be safe to use cv::Mat 
+    // rather than obsolete IplImage in terms of robustness.
     // IplImage* img_temp = new IplImage(cv::imdecode(JPEG_Data, cv::IMREAD_COLOR));
     // IplImage* resized = cvCreateImage(cvSize(416, 311), img_temp->depth, img_temp->nChannels);
     // cvResize(img_temp, resized);
@@ -634,6 +623,9 @@ void yolo_detect(unsigned char *pFramedata, long JPEG_data_size, bodycoord::Dete
 }
 
 /*
+ * Due to protobuf incompatibility (3.3.0-python versus 2.6.1-c++)
+ * this portion of code cannot be used.
+ *
 void charades_webcam() {
     int argc = 1;
     char *argv[] = {"./build/examples/tutorial_pose/3_HTTP_test2.bin"};
